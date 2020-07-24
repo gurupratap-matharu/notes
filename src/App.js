@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import Note from './components/Note'
 import noteService from './services/notes'
+import loginService from './services/login'
 import Notification from './components/Notification'
 import Footer from './components/Footer'
+import LoginForm from './components/LoginForm'
+import NoteForm from './components/NoteForm'
 
 const App = () => {
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
   const [showAll, setShowAll] = useState(true)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [userName, setUserName] = useState('')
+  const [password, setPassword] = useState('')
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     noteService
@@ -16,6 +22,15 @@ const App = () => {
       .then(initialNotes => {
         setNotes(initialNotes)
       })
+  }, [])
+
+  useEffect(() => {
+    const loggedUserJSON = window.localStorage.getItem('loggedNoteappUser')
+    if (loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON)
+      setUser(user)
+      noteService.setToken(user.token)
+    }
   }, [])
 
   const addNote = (event) => {
@@ -34,6 +49,35 @@ const App = () => {
   }
   const handleNoteChange = (event) => {
     setNewNote(event.target.value)
+  }
+
+  const handleUsernameChange = (event) => {
+    console.log(event.target.value)
+    setUserName(event.target.value)
+  }
+
+  const handlePasswordChange = (event) => {
+    console.log(event.target.value)
+    setPassword(event.target.value)
+  }
+
+  const handleLogin = async (event) => {
+    event.preventDefault()
+    console.log(`logging with ${userName} ${password}`)
+    try {
+
+      const user = await loginService.login({ 'username': userName, 'password': password })
+      window.localStorage.setItem('loggedNoteappUser', JSON.stringify(user))
+      noteService.setToken(user.token)
+      setUser(user)
+      setUserName('')
+      setPassword('')
+    } catch (exception) {
+      setErrorMessage('Wrong credentials')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000);
+    }
   }
 
   const notesToShow = showAll
@@ -57,10 +101,27 @@ const App = () => {
         setNotes(notes.filter(n => n.id !== id))
       })
   }
+
   return (
     <div>
       <h1>Notes</h1>
       <Notification message={errorMessage} />
+      {user === null ?
+        <LoginForm
+          handleLogin={handleLogin}
+          userName={userName}
+          password={password}
+          handleUsernameChange={handleUsernameChange}
+          handlePasswordChange={handlePasswordChange}
+        /> :
+        <div>
+          <p>{user.name} logged-in</p>
+          <NoteForm
+            addNote={addNote}
+            newNote={newNote}
+            handleNoteChange={handleNoteChange}
+          />
+        </div>}
       <div>
         <button onClick={() => setShowAll(!showAll)}>
           show {showAll ? 'important' : 'all'}
@@ -74,10 +135,6 @@ const App = () => {
             toggleImportance={() => toggleImportanceOf(note.id)} />
         )}
       </ul>
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-        <button type='submit'>Save</button>
-      </form>
       <Footer />
     </div>
   )
