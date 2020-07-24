@@ -4,6 +4,8 @@ import noteService from './services/notes'
 import loginService from './services/login'
 import Notification from './components/Notification'
 import Footer from './components/Footer'
+import LoginForm from './components/LoginForm'
+import NoteForm from './components/NoteForm'
 
 const App = () => {
   const [notes, setNotes] = useState([])
@@ -100,35 +102,25 @@ const App = () => {
       })
   }
 
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <div>
-        username
-      <input type="text" value={userName} name="Username" onChange={handleUsernameChange} />
-      </div>
-      <div>
-        password
-      <input type="password" value={password} name="Password" onChange={handlePasswordChange} />
-      </div>
-      <button type="submit">Login</button>
-    </form>
-  )
-
-  const noteForm = () => (
-    <form onSubmit={addNote}>
-      <input value={newNote} onChange={handleNoteChange} />
-      <button type='submit'>Save</button>
-    </form>
-  )
-
   return (
     <div>
       <h1>Notes</h1>
       <Notification message={errorMessage} />
-      {user === null ? loginForm() :
+      {user === null ?
+        <LoginForm
+          handleLogin={handleLogin}
+          userName={userName}
+          password={password}
+          handleUsernameChange={handleUsernameChange}
+          handlePasswordChange={handlePasswordChange}
+        /> :
         <div>
           <p>{user.name} logged-in</p>
-          {noteForm()}
+          <NoteForm
+            addNote={addNote}
+            newNote={newNote}
+            handleNoteChange={handleNoteChange}
+          />
         </div>}
       <div>
         <button onClick={() => setShowAll(!showAll)}>
