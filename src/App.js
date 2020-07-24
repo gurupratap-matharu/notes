@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Note from './components/Note'
 import noteService from './services/notes'
+import loginService from './services/login'
 import Notification from './components/Notification'
 import Footer from './components/Footer'
 
@@ -9,6 +10,9 @@ const App = () => {
   const [newNote, setNewNote] = useState('')
   const [showAll, setShowAll] = useState(true)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [userName, setUserName] = useState('')
+  const [password, setPassword] = useState('')
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     noteService
@@ -36,6 +40,34 @@ const App = () => {
     setNewNote(event.target.value)
   }
 
+  const handleUsernameChange = (event) => {
+    console.log(event.target.value)
+    setUserName(event.target.value)
+  }
+
+  const handlePasswordChange = (event) => {
+    console.log(event.target.value)
+    setPassword(event.target.value)
+  }
+
+  const handleLogin = async (event) => {
+    event.preventDefault()
+    console.log(`logging with ${userName} ${password}`)
+    try {
+
+      const user = await loginService.login({ userName, password })
+
+      setUser(user)
+      setUserName('')
+      setPassword('')
+    } catch (exception) {
+      setErrorMessage('Wrong credentials')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000);
+    }
+  }
+
   const notesToShow = showAll
     ? notes
     : notes.filter(note => note.important)
@@ -57,10 +89,37 @@ const App = () => {
         setNotes(notes.filter(n => n.id !== id))
       })
   }
+
+  const loginForm = () => (
+    <form onSubmit={handleLogin}>
+      <div>
+        username
+      <input type="text" value={userName} name="Username" onChange={handleUsernameChange} />
+      </div>
+      <div>
+        password
+      <input type="password" value={password} name="Password" onChange={handlePasswordChange} />
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  )
+
+  const noteForm = () => (
+    <form onSubmit={addNote}>
+      <input value={newNote} onChange={handleNoteChange} />
+      <button type='submit'>Save</button>
+    </form>
+  )
+
   return (
     <div>
       <h1>Notes</h1>
       <Notification message={errorMessage} />
+      {user === null ? loginForm() :
+        <div>
+          <p>{user.name} logged-in</p>
+          {noteForm()}
+        </div>}
       <div>
         <button onClick={() => setShowAll(!showAll)}>
           show {showAll ? 'important' : 'all'}
@@ -74,10 +133,6 @@ const App = () => {
             toggleImportance={() => toggleImportanceOf(note.id)} />
         )}
       </ul>
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-        <button type='submit'>Save</button>
-      </form>
       <Footer />
     </div>
   )
