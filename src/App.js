@@ -6,10 +6,10 @@ import Notification from './components/Notification'
 import Footer from './components/Footer'
 import LoginForm from './components/LoginForm'
 import NoteForm from './components/NoteForm'
+import Togglable from './components/Togglable'
 
 const App = () => {
   const [notes, setNotes] = useState([])
-  const [newNote, setNewNote] = useState('')
   const [showAll, setShowAll] = useState(true)
   const [errorMessage, setErrorMessage] = useState(null)
   const [userName, setUserName] = useState('')
@@ -33,23 +33,14 @@ const App = () => {
     }
   }, [])
 
-  const addNote = (event) => {
-    event.preventDefault()
-    const noteObject = {
-      content: newNote,
-      date: new Date(),
-      important: Math.random() > 0.5,
-    }
+  const addNote = (noteObject) => {
     noteService
       .create(noteObject)
       .then(returnedNote => {
         setNotes(notes.concat(returnedNote))
-        setNewNote('')
       })
   }
-  const handleNoteChange = (event) => {
-    setNewNote(event.target.value)
-  }
+
 
   const handleUsernameChange = (event) => {
     console.log(event.target.value)
@@ -106,22 +97,22 @@ const App = () => {
     <div>
       <h1>Notes</h1>
       <Notification message={errorMessage} />
-      {user === null ?
+
+      <Togglable buttonLabel='login'>
         <LoginForm
           handleLogin={handleLogin}
           userName={userName}
           password={password}
           handleUsernameChange={handleUsernameChange}
           handlePasswordChange={handlePasswordChange}
-        /> :
-        <div>
-          <p>{user.name} logged-in</p>
-          <NoteForm
-            addNote={addNote}
-            newNote={newNote}
-            handleNoteChange={handleNoteChange}
-          />
-        </div>}
+        />
+      </Togglable>
+      <div>
+        <p>You are logged-in</p>
+        <Togglable buttonLabel='new note'>
+          <NoteForm createNote={addNote} />
+        </Togglable>
+      </div>
       <div>
         <button onClick={() => setShowAll(!showAll)}>
           show {showAll ? 'important' : 'all'}
